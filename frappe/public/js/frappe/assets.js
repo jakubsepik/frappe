@@ -91,16 +91,21 @@ class AssetManager {
 	}
 
 	load_asset(path, url) {
-		if (this._executed.includes(path)) {
-			return Promise.resolve();
-		}
-
-		const ext = this.extn(path);
-		const handler = this._handlers[ext];
-		return handler(url).then(() => {
-			this._executed.push(path);
-		});
+	if (this._executed.includes(path)) {
+		return Promise.resolve();
 	}
+
+	this._loading ??= {};
+	this._loading[path] ??= this._handlers[this.extn(path)](url)
+		.then(() => {
+			this._executed.push(path);
+		})
+		.finally(() => {
+			delete this._loading[path];
+		});
+
+	return this._loading[path];
+}
 
 	execute(items, callback) {
 		// this is virtual page load, only get the the source
